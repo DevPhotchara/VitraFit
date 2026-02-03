@@ -12,7 +12,7 @@ export default function HomePage() {
       {/* Header */}
       <nav className="flex items-center justify-center px-6 py-10 bg-neutral-900 shadow-lg 2xl:py-16">
         <h1 className="text-4xl font-bold tracking-tight 2xl:text-6xl">
-          <span className="bg-orange-500 px-2 py-1">VITRA</span>FIT
+          <span className="bg-green-500 px-2 py-1">VITRA</span>FIT
         </h1>
       </nav>
 

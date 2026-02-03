@@ -9,31 +9,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) ดึงโค้ดจาก repo
+      # 1) ดึงโค้ด
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 2) เปิด QEMU เพื่อ build image ข้ามสถาปัตยกรรม (amd64 / arm64)
+      # 2) เปิด QEMU (เพื่อ build arm64)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # 3) เปิด Docker Buildx (จำเป็นสำหรับ multi-arch)
+      # 3) เปิด Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4) Login เข้า GitHub Container Registry (GHCR)
-      - name: Login to GHCR
+      # 4) Login Docker Hub (ใช้ secrets ที่คุณมี)
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 5) Build + Push image (amd64 + arm64)
-      - name: Build and push multi-arch image
+      # 5) Build + Push multi-arch image
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/DevPhotchara/vitrafit:latest
+          tags: docker.io/${{ secrets.DOCKER_USERNAME }}/vitrafit:latest
           platforms: linux/amd64,linux/arm64

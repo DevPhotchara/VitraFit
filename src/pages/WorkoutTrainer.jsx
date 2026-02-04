@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { workoutClasses } from "../data/workouts/test.js";
-import PoseCamera from "../components/excerciseUI/PoseCamera";
-import { analyzeSquat } from "../mediapipe/exercise/squat";
+import { workoutClasses } from "../data/workouts";
 
 import Header from "../components/excerciseUI/Header";
 import ProgressBar from "../components/excerciseUI/ProgressBar";
@@ -16,9 +14,11 @@ export default function WorkoutTrainer() {
   const { id, sessionIndex } = useParams();
   const navigate = useNavigate();
 
+  /* ===== ดึงข้อมูล session จาก data ===== */
   const workout = workoutClasses.find(w => w.id === id);
   const session = workout?.sessions?.[sessionIndex];
 
+  /* ===== กัน error ถ้า URL ผิด ===== */
   if (!workout || !session) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -35,74 +35,50 @@ export default function WorkoutTrainer() {
     session.exercises[0].duration ?? 10
   );
 
-  /* ✅ Pose Squat State */
-  const [squatState, setSquatState] = useState({
-    stage: "up",
-    reps: 0,
-  });
-
   const exercise = session.exercises[currentExercise];
   const progress = ((currentExercise + 1) / totalExercises) * 100;
 
-  /* ===== Timer ทำงานเฉพาะ Exercise ปกติ ===== */
+  /* ===== Timer ===== */
   useEffect(() => {
     if (!isPlaying) return;
-    if (exercise.usePose) return; // ✅ Pose ไม่ใช้ timer
 
-    const timerId = setInterval(() => {
+    const id = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           setIsPlaying(false);
-          setTimeout(nextExercise, 700);
+          if (currentExercise < totalExercises - 1) {
+            setTimeout(nextExercise, 700);
+          }
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timerId);
+    return () => clearInterval(id);
   }, [isPlaying, currentExercise]);
 
-  /* ===== Pose Results ===== */
-  const handlePoseResults = (results) => {
-    if (!results.poseLandmarks) return;
-
-    const updated = analyzeSquat(results.poseLandmarks, squatState);
-    setSquatState(updated);
-  };
-
-  /* ===== Pose Target Reps → Next ===== */
-  useEffect(() => {
-    if (!exercise.usePose) return;
-
-    const target = exercise.targetReps ?? 10;
-
-    if (squatState.reps >= target) {
-      setTimeout(nextExercise, 800);
-    }
-  }, [squatState.reps]);
-
-  /* ===== Next Exercise ===== */
+  /* ===== Controls ===== */
   const nextExercise = () => {
     if (currentExercise < totalExercises - 1) {
       const next = currentExercise + 1;
-      const nextEx = session.exercises[next];
-
       setCurrentExercise(next);
-
-      if (nextEx.usePose) {
-        setTimeLeft(0); // ✅ Pose ไม่ต้องมีเวลา
-      } else {
-        setTimeLeft(nextEx.duration ?? 10);
-      }
-
+      setTimeLeft(session.exercises[next].duration ?? 10);
       setIsPlaying(true);
-      setSquatState({ stage: "up", reps: 0 });
+    }
+  };
+
+  const prevExercise = () => {
+    if (currentExercise > 0) {
+      const prev = currentExercise - 1;
+      setCurrentExercise(prev);
+      setTimeLeft(session.exercises[prev].duration ?? 10);
+      setIsPlaying(true);
     }
   };
 
   /* ===== Finish Screen ===== */
-  if (currentExercise === totalExercises - 1 && !exercise.usePose && timeLeft === 0) {
+  if (currentExercise === totalExercises - 1 && timeLeft === 0) {
     return (
       <CompletionScreen
         session={session}
@@ -114,7 +90,10 @@ export default function WorkoutTrainer() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header session={session} onBack={() => navigate(-1)} />
+      <Header
+        session={session}
+        onBack={() => navigate(-1)}
+      />
 
       <div className="px-4 py-4 space-y-4">
         <ProgressBar
@@ -123,24 +102,15 @@ export default function WorkoutTrainer() {
           progress={progress}
         />
 
-        {/* ✅ Video หรือ Pose */}
-        {exercise.usePose ? (
-          <PoseCamera onResults={handlePoseResults} />
-        ) : (
-          <VideoPlayer exercise={exercise} />
-        )}
+        <VideoPlayer
+          exercise={exercise}
+          timeLeft={timeLeft}
+        />
 
-        {/* ✅ Timer หรือ Reps */}
-        {exercise.usePose ? (
-          <div className="text-center text-3xl font-bold py-4">
-            Squat: {squatState.reps} / {exercise.targetReps ?? 10}
-          </div>
-        ) : (
-          <TimerCircle
-            timeLeft={timeLeft}
-            duration={exercise.duration ?? 10}
-          />
-        )}
+        <TimerCircle
+          timeLeft={timeLeft}
+          duration={exercise.duration ?? 10}
+        />
 
         <ExerciseInfo
           exercise={exercise}
@@ -153,6 +123,9 @@ export default function WorkoutTrainer() {
           onPause={() => setIsPlaying(false)}
           onResume={() => setIsPlaying(true)}
           onNext={nextExercise}
+          onPrev={prevExercise}
+          showNext={currentExercise < totalExercises - 1}
+          showPrev={currentExercise > 0}
         />
       </div>
     </div>

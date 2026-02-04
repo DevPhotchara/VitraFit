@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
 # 1. เอาข้อมูล dependency เข้าไปก่อน
@@ -13,7 +13,7 @@ COPY . .
 RUN npm run build
 
 # ---------- Run stage ----------
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 RUN npm install -g serve

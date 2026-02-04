@@ -4,7 +4,7 @@ import { workoutClasses } from "../data/workouts";
 
 import Header from "../components/excerciseUI/Header";
 import ProgressBar from "../components/excerciseUI/ProgressBar";
-import VideoPlayer from "../components/excerciseUI/VideoPlayer";
+import VideoPlayer from "../components/excerciseUI/PoseCamera";
 import TimerCircle from "../components/excerciseUI/TimerVertical";
 import ControlButtons from "../components/excerciseUI/ControlButtons";
 import ExerciseInfo from "../components/excerciseUI/ExerciseInfo";

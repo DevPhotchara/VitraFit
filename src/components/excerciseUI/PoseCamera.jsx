@@ -7,8 +7,10 @@ export default function PoseCamera({ onResults }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    let camera;
+
     const pose = new Pose({
-      locateFile: (file) =>
+      locateFile: file =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
@@ -19,22 +21,26 @@ export default function PoseCamera({ onResults }) {
       minTrackingConfidence: 0.5,
     });
 
-    pose.onResults((results) => {
+    pose.onResults(results => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
 
+      // sync canvas size กับจอ
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // วาดภาพกล้อง
       ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
       if (results.poseLandmarks) {
-        // ✅ เรียกจาก window
         window.drawConnectors(
           ctx,
           results.poseLandmarks,
           Pose.POSE_CONNECTIONS,
           { color: "#00FF00", lineWidth: 4 }
         );
-
         window.drawLandmarks(
           ctx,
           results.poseLandmarks,
@@ -45,25 +51,32 @@ export default function PoseCamera({ onResults }) {
       onResults?.(results);
     });
 
-    const camera = new Camera(videoRef.current, {
+    camera = new Camera(videoRef.current, {
       onFrame: async () => {
         await pose.send({ image: videoRef.current });
       },
-      width: 640,
-      height: 480,
+      width: 1280,
+      height: 720,
     });
 
     camera.start();
+
+    return () => {
+      camera?.stop();
+      pose.close();
+    };
   }, []);
 
   return (
-    <div className="relative w-[640px] h-[480px]">
+    <div className="fixed inset-0 bg-black">
       <video ref={videoRef} className="hidden" />
       <canvas
         ref={canvasRef}
-        width={640}
-        height={480}
-        className="rounded-xl border border-neutral-700"
+        className="
+          w-full h-full
+          object-cover
+          scale-x-[-1]
+        "
       />
     </div>
   );

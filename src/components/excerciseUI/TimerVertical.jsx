@@ -2,10 +2,10 @@ export default function TimerVertical({ timeLeft, duration }) {
   const percent = (timeLeft / duration) * 100;
 
   return (
-    <div className="absolute top-14 right-6 z-20 flex flex-col items-center">
+    <div className="absolute top-14 right-8 z-20 flex flex-col items-center">
       
       {/* Number */}
-      <div className="text-4xl font-bold text-orange-400 drop-shadow-[0_0_12px_#ff7b32]">
+      <div className="text-4xl font-bold text-white drop-shadow-[0_0_12px_#ff7b32]">
         {timeLeft}
       </div>
 

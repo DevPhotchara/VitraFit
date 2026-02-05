@@ -10,7 +10,7 @@ export default function ControlButtons({
   showPrev
 }) {
   return (
-    <div className="absolute bottom-[23rem] left-0 right-0 z-30 pointer-events-none">
+    <div className="absolute bottom-[22rem] left-0 right-0 z-30 pointer-events-none">
 
       {/* ◀️ Prev */}
       {showPrev && (
@@ -37,14 +37,14 @@ export default function ControlButtons({
             pointer-events-auto
             absolute left-1/2 -translate-x-1/2
             bg-orange-500 text-white
-            px-16 py-8 rounded-full
+            px-20 py-8 rounded-full
             font-bold text-3xl
             flex items-center gap-4
             hover:bg-orange-600 transition
             shadow-2xl shadow-orange-500/50
           "
         >
-          <Play className="w-10 h-10" />
+          <Play className="w-12 h-12" />
           เริ่ม
         </button>
       ) : (

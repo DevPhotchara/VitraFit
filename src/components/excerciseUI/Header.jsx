@@ -8,8 +8,8 @@ export default function Header({ session, onBack }) {
         <X className="w-10 h-10" />
       </button>
       <div className="text-center">
-        <h1 className="text-3xl font-bold">{session.title}</h1>
-        <p className="text-orange-500 text-xl mt-1">{session.level}</p>
+        <h1 className="text-4xl font-bold">{session.title}</h1>
+        <p className="text-orange-500 text-3xl mt-1">{session.level}</p>
       </div>
       <div className="w-20"></div>
     </div>

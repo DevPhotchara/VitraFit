@@ -1,6 +1,6 @@
-import { yoga } from "./yoga";
 import { stretch } from "./stretch";
 import { cardio } from "./cardio";
 import { strength } from "./strength";
+import { bodyweight } from "./bodyweight";
 
-export const workoutClasses = [strength, stretch, cardio, yoga];
+export const workoutClasses = [bodyweight, strength, stretch, cardio,];

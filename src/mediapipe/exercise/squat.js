@@ -20,7 +20,7 @@ export function analyzeSquat(landmarks, state) {
   if (kneeAngle > UP_ANGLE + BUFFER && stage === "down") {
     stage = "up";
     reps += 1;
-  }
+  }ฟ
 
   return { stage, reps, kneeAngle };
 }

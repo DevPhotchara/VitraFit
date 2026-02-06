@@ -1,86 +1,100 @@
-// src/components/excerciseUI/PoseCamera.jsx
-
 import { useEffect, useRef } from "react";
-import { initPoseDetector } from "../../mediapipe/initPoseDetector";
+import { Pose } from "@mediapipe/pose";
+import { Camera } from "@mediapipe/camera_utils";
 
-export default function PoseCamera({ onResults }) {
+export default function PoseCamera({
+  onResults,
+  isPlaying,
+  cameraId, // ✅ รับ deviceId จาก parent
+}) {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const cameraRef = useRef(null);
+  const poseRef = useRef(null);
 
-  const onResultsRef = useRef(onResults);
-
-  useEffect(() => {
-    onResultsRef.current = onResults;
-  }, [onResults]);
-
+  /* ===============================
+     ✅ Init Pose Detector
+  =============================== */
   useEffect(() => {
     if (!videoRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    // ✅ เต็มจอแนวตั้ง
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const detector = initPoseDetector(videoRef.current, (results) => {
-      if (!results?.poseLandmarks) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // ============================
-      // ✅ COVER MODE (เต็มจอแบบ TikTok)
-      // ============================
-      const imgW = results.image.width;
-      const imgH = results.image.height;
-
-      const canvasW = canvas.width;
-      const canvasH = canvas.height;
-
-      const scale = Math.max(canvasW / imgW, canvasH / imgH);
-
-      const drawW = imgW * scale;
-      const drawH = imgH * scale;
-
-      const offsetX = (canvasW - drawW) / 2;
-      const offsetY = (canvasH - drawH) / 2;
-
-      ctx.drawImage(results.image, offsetX, offsetY, drawW, drawH);
-
-      // ============================
-      // 🟠 Draw Landmarks ให้ตรง
-      // ============================
-      ctx.save();
-      ctx.fillStyle = "orange";
-
-      results.poseLandmarks.forEach((lm, index) => {
-        if (index <= 10) return;
-
-        const x = offsetX + lm.x * drawW;
-        const y = offsetY + lm.y * drawH;
-
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      ctx.restore();
-
-      onResultsRef.current?.(results);
+    const pose = new Pose({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
-    return () => detector.stop();
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      smoothSegmentation: true,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6,
+    });
+
+    pose.onResults(onResults);
+
+    poseRef.current = pose;
+
+    return () => {
+      pose.close();
+    };
   }, []);
 
-  return (
-    <div className="fixed inset-0 bg-black">
-      <video ref={videoRef} className="hidden" />
+  /* ===============================
+     ✅ Start Camera (with deviceId)
+  =============================== */
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (!poseRef.current) return;
 
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full scale-x-[-1]"
+    async function startCamera() {
+      // stop old camera first
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+      }
+
+      console.log("🎥 Starting camera with ID:", cameraId);
+
+      cameraRef.current = new Camera(videoRef.current, {
+        onFrame: async () => {
+          if (poseRef.current && isPlaying) {
+            await poseRef.current.send({
+              image: videoRef.current,
+            });
+          }
+        },
+
+        width: 1280,
+        height: 720,
+
+        // ✅ Use selected camera
+        deviceId: cameraId ? cameraId : undefined,
+      });
+
+      cameraRef.current.start();
+    }
+
+    startCamera();
+
+    return () => {
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+      }
+    };
+  }, [cameraId]); // ✅ restart when camera changes
+
+  /* ===============================
+     UI Render
+  =============================== */
+  return (
+    <div className="absolute inset-0 z-0">
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover scale-x-[-1]"
       />
     </div>
   );
 }
-    

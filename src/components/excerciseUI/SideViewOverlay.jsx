@@ -1,7 +1,52 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Camera } from "lucide-react";
 
-export default function SideViewOverlay({ onClose }) {
+export default function SideViewOverlay({ onClose, onSelectCamera }) {
+  const [cameras, setCameras] = useState([]);
+  const [selected, setSelected] = useState("");
+
+  /* ===============================
+     ✅ Load Camera Devices
+  =============================== */
+  useEffect(() => {
+    async function loadDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(
+          (d) => d.kind === "videoinput"
+        );
+
+        setCameras(videoDevices);
+
+        // auto select first camera
+        if (videoDevices.length > 0) {
+          setSelected(videoDevices[0].deviceId);
+
+          if (onSelectCamera) {
+            onSelectCamera(videoDevices[0].deviceId);
+          }
+        }
+      } catch (err) {
+        console.error("❌ Cannot load camera devices:", err);
+      }
+    }
+
+    loadDevices();
+  }, []);
+
+  /* ===============================
+     ✅ Handle Select Camera
+  =============================== */
+  function handleChange(e) {
+    const id = e.target.value;
+    setSelected(id);
+
+    if (onSelectCamera) {
+      onSelectCamera(id);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[4000] flex items-center justify-center">
       {/* Background */}
@@ -12,7 +57,7 @@ export default function SideViewOverlay({ onClose }) {
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.35 }}
-        className="relative w-[88%] max-w-md rounded-3xl 
+        className="relative w-[88%] max-w-md rounded-3xl
                    bg-white/10 border border-white/20
                    shadow-2xl px-8 py-10 text-center"
       >
@@ -35,6 +80,36 @@ export default function SideViewOverlay({ onClose }) {
           โปรดยืนให้เห็นด้านข้างชัดเจน
         </p>
 
+        {/* ===============================
+            ✅ Camera Selector
+        =============================== */}
+        <div className="mt-6 text-left">
+          <label className="text-white/70 text-sm flex items-center gap-2 mb-2">
+            <Camera className="w-4 h-4" />
+            เลือกกล้องที่ต้องการใช้
+          </label>
+
+          <select
+            value={selected}
+            onChange={handleChange}
+            className="w-full rounded-xl px-4 py-3
+                       bg-white/20 text-white
+                       border border-white/20
+                       focus:outline-none focus:ring-2
+                       focus:ring-orange-400"
+          >
+            {cameras.map((cam, index) => (
+              <option
+                key={cam.deviceId}
+                value={cam.deviceId}
+                className="text-black"
+              >
+                {cam.label || `Camera ${index + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Tip */}
         <div className="mt-6 text-sm text-white/60">
           💡 Tip: ไหล่ซ้าย–ขวาควรอยู่ใกล้กัน
@@ -54,8 +129,8 @@ export default function SideViewOverlay({ onClose }) {
         {/* Skip Button */}
         <button
           onClick={onClose}
-          className="mt-8 w-full py-3 rounded-xl 
-                     bg-white/20 hover:bg-white/30 
+          className="mt-8 w-full py-3 rounded-xl
+                     bg-white/20 hover:bg-white/30
                      text-white font-medium transition"
         >
           ข้ามไปก่อน →

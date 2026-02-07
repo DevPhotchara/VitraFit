@@ -1,99 +1,96 @@
+// src/components/excerciseUI/PoseCamera.jsx
+
 import { useEffect, useRef } from "react";
-import { Pose } from "@mediapipe/pose";
-import { Camera } from "@mediapipe/camera_utils";
+import { initPoseDetector } from "../../mediapipe/initPoseDetector";
 
-export default function PoseCamera({
-  onResults,
-  isPlaying,
-  cameraId, // ✅ รับ deviceId จาก parent
-}) {
+export default function PoseCamera({ onResults }) {
   const videoRef = useRef(null);
-  const cameraRef = useRef(null);
-  const poseRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  /* ===============================
-     ✅ Init Pose Detector
-  =============================== */
+  const onResultsRef = useRef(onResults);
+
+  useEffect(() => {
+    onResultsRef.current = onResults;
+  }, [onResults]);
+
   useEffect(() => {
     if (!videoRef.current) return;
 
-    const pose = new Pose({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      smoothSegmentation: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
-    });
+    // ✅ เต็มจอแนวตั้ง
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    pose.onResults(onResults);
+    const detector = initPoseDetector(videoRef.current, (results) => {
+      if (!results?.poseLandmarks) return;
 
-    poseRef.current = pose;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    return () => {
-      pose.close();
-    };
-  }, []);
+      // ============================
+      // ✅ COVER MODE (เต็มจอแบบ TikTok)
+      // ============================
+      const imgW = results.image.width;
+      const imgH = results.image.height;
 
-  /* ===============================
-     ✅ Start Camera (with deviceId)
-  =============================== */
-  useEffect(() => {
-    if (!videoRef.current) return;
-    if (!poseRef.current) return;
+      const canvasW = canvas.width;
+      const canvasH = canvas.height;
 
-    async function startCamera() {
-      // stop old camera first
-      if (cameraRef.current) {
-        cameraRef.current.stop();
-      }
+      const scale = Math.max(canvasW / imgW, canvasH / imgH);
 
-      console.log("🎥 Starting camera with ID:", cameraId);
+      const drawW = imgW * scale;
+      const drawH = imgH * scale;
 
-      cameraRef.current = new Camera(videoRef.current, {
-        onFrame: async () => {
-          if (poseRef.current && isPlaying) {
-            await poseRef.current.send({
-              image: videoRef.current,
-            });
-          }
-        },
+      const offsetX = (canvasW - drawW) / 2;
+      const offsetY = (canvasH - drawH) / 2;
 
-        width: 1280,
-        height: 720,
+      ctx.drawImage(results.image, offsetX, offsetY, drawW, drawH);
 
-        // ✅ Use selected camera
-        deviceId: cameraId ? cameraId : undefined,
+      // ============================
+      // 🟠 Draw Landmarks
+      // ============================
+      ctx.save();
+      ctx.fillStyle = "orange";
+
+      results.poseLandmarks.forEach((lm, index) => {
+        if (index <= 10) return;
+
+        const x = offsetX + lm.x * drawW;
+        const y = offsetY + lm.y * drawH;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
       });
 
-      cameraRef.current.start();
-    }
+      ctx.restore();
 
-    startCamera();
+      onResultsRef.current?.(results);
+    });
 
-    return () => {
-      if (cameraRef.current) {
-        cameraRef.current.stop();
-      }
-    };
-  }, [cameraId]); // ✅ restart when camera changes
+    return () => detector.stop();
+  }, []);
 
-  /* ===============================
-     UI Render
-  =============================== */
   return (
-    <div className="absolute inset-0 z-0">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="w-full h-full object-cover scale-x-[-1]"
+    <div
+      className="
+        fixed inset-0 bg-black
+        z-[10]
+        pointer-events-none
+      "
+    >
+      {/* video hidden */}
+      <video ref={videoRef} className="hidden" />
+
+      {/* canvas full screen */}
+      <canvas
+        ref={canvasRef}
+        className="
+          w-full h-full
+          scale-x-[-1]
+          pointer-events-none
+        "
       />
     </div>
   );

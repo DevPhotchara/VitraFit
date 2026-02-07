@@ -22,18 +22,10 @@ import FormErrorOverlay from "../components/excerciseUI/FormErrorOverlay";
 function DebugOverlay({ debugInfo }) {
   if (!debugInfo) return null;
 
-  // Add custom debug fields
-  const customDebug = {
-    activeSide: debugInfo.activeSide,
-    rawAngle: debugInfo.rawAngle,
-    kneeVisibility: debugInfo.kneeVisibility,
-    ...debugInfo,
-  };
-
   return (
     <div className="fixed top-12 right-3 z-[5000] rounded-xl bg-black/70 px-4 py-3 text-sm text-white shadow-lg">
       <b className="text-orange-400">DEBUG</b>
-      {Object.entries(customDebug).map(([k, v]) => (
+      {Object.entries(debugInfo).map(([k, v]) => (
         <div key={k}>
           <b>{k}:</b>{" "}
           {typeof v === "object" ? JSON.stringify(v) : String(v)}
@@ -200,9 +192,9 @@ export default function WorkoutTrainer() {
       />
 
       {/* ✅ Overlay: Squat ต้องหันข้าง */}
-      {exercise.key === "squat" && !ready && (
-        <SideViewOverlay />
-      )}
+    {exercise.key === "squat" && !ready && (
+      <SideViewOverlay />
+    )}
 
       {/* ⏱ Timer */}
       {!isRepExercise && (

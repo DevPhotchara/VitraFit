@@ -19,7 +19,7 @@ export default function SideViewOverlay({ onClose, onSelectCamera }) {
 
         setCameras(videoDevices);
 
-        // auto select first camera
+        // ✅ Auto select first camera
         if (videoDevices.length > 0) {
           setSelected(videoDevices[0].deviceId);
 
@@ -49,15 +49,18 @@ export default function SideViewOverlay({ onClose, onSelectCamera }) {
 
   return (
     <div className="fixed inset-0 z-[4000] flex items-center justify-center">
-      {/* Background */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
 
-      {/* Card */}
+      {/* ✅ Background (ไม่กินคลิกแล้ว!) */}
+      <div
+        className="absolute inset-0 bg-black/80 backdrop-blur-md pointer-events-none"
+      />
+
+      {/* ✅ Card (กดได้ทุกปุ่มแน่นอน) */}
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.35 }}
-        className="relative w-[88%] max-w-md rounded-3xl
+        className="relative pointer-events-auto w-[88%] max-w-md rounded-3xl
                    bg-white/10 border border-white/20
                    shadow-2xl px-8 py-10 text-center"
       >
@@ -115,7 +118,7 @@ export default function SideViewOverlay({ onClose, onSelectCamera }) {
           💡 Tip: ไหล่ซ้าย–ขวาควรอยู่ใกล้กัน
         </div>
 
-        {/* Loading */}
+        {/* Loading Animation */}
         <motion.div
           className="mt-8 flex justify-center gap-2"
           animate={{ opacity: [0.3, 1, 0.3] }}
@@ -126,7 +129,7 @@ export default function SideViewOverlay({ onClose, onSelectCamera }) {
           <div className="w-2 h-2 rounded-full bg-orange-400" />
         </motion.div>
 
-        {/* Skip Button */}
+        {/* ✅ Skip Button */}
         <button
           onClick={onClose}
           className="mt-8 w-full py-3 rounded-xl
